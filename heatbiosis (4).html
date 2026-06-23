@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heatbiosis — Valorisation des rejets thermiques</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0A0F1E;
+    --algae: #2DD4A0;
+    --algae-dim: #1a8a68;
+    --heat: #FF6B35;
+    --white: #F0F4F8;
+    --slate: #94A3B8;
+    --slate-dark: #4A5568;
+    --card-bg: #141c2f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--navy); color: var(--white); overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 3rem;
+    background: rgba(10,15,30,0.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(45,212,160,0.12);
+  }
+  .logo-img { height: 48px; width: auto; display: block; }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.82rem; font-weight: 500; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--slate); text-decoration: none;
+    transition: color 0.2s; cursor: pointer;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--algae); }
+
+  /* HERO */
+  #home {
+    position: relative; height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow: hidden; text-align: center; padding: 2rem;
+  }
+  canvas#heatCanvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.35; }
+  .hero-content { position: relative; z-index: 2; max-width: 780px; }
+  .hero-tag {
+    display: inline-block; font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--algae);
+    border: 1px solid rgba(45,212,160,0.35); padding: 0.35rem 1rem;
+    border-radius: 100px; margin-bottom: 2rem;
+  }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(3rem, 8vw, 6rem); font-weight: 800; line-height: 1.0; letter-spacing: -0.03em; margin-bottom: 1.5rem; }
+  h1 .heat-word { color: var(--heat); }
+  h1 .algae-word { color: var(--algae); }
+  .hero-desc { font-size: 1.05rem; line-height: 1.75; color: var(--slate); max-width: 600px; margin: 0 auto 2.5rem; font-weight: 300; }
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--algae); color: var(--navy); font-weight: 600; font-size: 0.9rem;
+    padding: 0.85rem 2rem; border-radius: 8px; cursor: pointer;
+    transition: background 0.2s, transform 0.15s; border: none;
+  }
+  .hero-cta:hover { background: #3ef5bb; transform: translateY(-2px); }
+  .scroll-hint {
+    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    color: var(--slate-dark); font-size: 0.7rem; letter-spacing: 0.1em;
+    text-transform: uppercase; z-index: 2; animation: bounce 2s infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
+
+  /* SECTIONS */
+  section { display: none; min-height: 100vh; padding: 8rem 4rem 5rem; max-width: 1100px; margin: 0 auto; }
+  section.active { display: block; }
+  .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--algae); margin-bottom: 1rem; }
+  h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 2rem; }
+  p.body-text { color: var(--slate); font-size: 1rem; line-height: 1.8; max-width: 680px; margin-bottom: 1.5rem; font-weight: 300; }
+  .divider { width: 48px; height: 3px; background: linear-gradient(90deg, var(--algae), var(--heat)); border-radius: 2px; margin: 2.5rem 0; }
+
+  /* CARDS */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+  .card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 2rem; transition: border-color 0.2s, transform 0.2s; }
+  .card:hover { border-color: rgba(45,212,160,0.3); transform: translateY(-4px); }
+  .card-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .card h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
+  .card p { font-size: 0.9rem; color: var(--slate); line-height: 1.65; }
+
+  /* FLOW */
+  .flow { display: flex; flex-direction: column; margin-top: 3rem; }
+  .flow-item { display: flex; gap: 2rem; align-items: flex-start; padding: 2rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .flow-item:last-child { border-bottom: none; }
+  .flow-num { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; color: rgba(45,212,160,0.18); min-width: 60px; line-height: 1; }
+  .flow-body h3 { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .flow-body p { font-size: 0.92rem; color: var(--slate); line-height: 1.7; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin: 3rem 0; }
+  .stat-box { background: var(--card-bg); border: 1px solid rgba(45,212,160,0.12); border-radius: 14px; padding: 2rem; text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; color: var(--algae); display: block; margin-bottom: 0.4rem; }
+  .stat-label { font-size: 0.82rem; color: var(--slate); line-height: 1.5; }
+
+  /* TEAM */
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+  .team-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 2rem 1.5rem; text-align: center; transition: border-color 0.2s; }
+  .team-card:hover { border-color: rgba(45,212,160,0.3); }
+  .team-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--algae-dim), var(--heat)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--navy); margin: 0 auto 1rem; }
+  .team-card h3 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .team-card .role { font-size: 0.78rem; color: var(--algae); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+
+  /* CONTACT */
+  .contact-wrap { max-width: 560px; }
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); margin-bottom: 0.5rem; }
+  .form-group input, .form-group textarea { width: 100%; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.85rem 1.1rem; color: var(--white); font-family: 'Inter', sans-serif; font-size: 0.95rem; transition: border-color 0.2s; outline: none; resize: vertical; }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--algae); }
+  .form-group textarea { min-height: 130px; }
+  .btn-submit { background: var(--algae); color: var(--navy); font-weight: 700; font-size: 0.9rem; padding: 0.85rem 2rem; border-radius: 8px; border: none; cursor: pointer; transition: background 0.2s; }
+  .btn-submit:hover { background: #3ef5bb; }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid rgba(255,255,255,0.05); color: var(--slate-dark); font-size: 0.8rem; }
+  footer span { color: var(--algae); }
+
+  /* EDIT MODE */
+  #edit-toolbar {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    z-index: 200; display: flex; align-items: center; gap: 0.75rem;
+    background: rgba(20,28,47,0.97); border: 1px solid rgba(45,212,160,0.3);
+    border-radius: 100px; padding: 0.6rem 1.2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(12px);
+  }
+  #edit-toolbar .tb-label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate-dark); padding-right: 0.5rem; border-right: 1px solid rgba(255,255,255,0.08); }
+  #edit-toolbar button { background: none; border: none; color: var(--white); font-size: 0.82rem; font-family: 'Inter', sans-serif; font-weight: 500; padding: 0.35rem 0.85rem; border-radius: 100px; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 0.4rem; }
+  #edit-toolbar button:hover { background: rgba(255,255,255,0.07); }
+  #btn-toggle-edit { background: var(--algae) !important; color: var(--navy) !important; font-weight: 700 !important; }
+  #btn-toggle-edit:hover { background: #3ef5bb !important; }
+  #btn-toggle-edit.editing { background: var(--heat) !important; color: #fff !important; }
+  #edit-toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%) translateY(10px); background: rgba(45,212,160,0.15); border: 1px solid var(--algae); color: var(--algae); font-size: 0.8rem; padding: 0.5rem 1.2rem; border-radius: 100px; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; z-index: 201; white-space: nowrap; }
+  #edit-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  body.edit-mode [contenteditable="true"] { outline: 1px dashed rgba(45,212,160,0.4); border-radius: 4px; cursor: text; }
+  body.edit-mode [contenteditable="true"]:hover { outline: 1px solid rgba(45,212,160,0.7); background: rgba(45,212,160,0.04); }
+  body.edit-mode [contenteditable="true"]:focus { outline: 2px solid var(--algae); background: rgba(45,212,160,0.06); }
+
+  @media (max-width: 768px) { nav { padding: 0.8rem 1.2rem; } .nav-links { gap: 1rem; } section { padding: 7rem 1.5rem 4rem; } }
+  @media (max-width: 520px) { .nav-links { gap: 0.6rem; } .nav-links a { font-size: 0.68rem; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <img class="logo-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAACRCAYAAAB0ZaIEAAA350lEQVR4nO29eXwdZ33v//4+M3MWSdZmy5YXSd73NV7iJSGLSQgJhDWkUKCl8GMppe3l3hZKe1va8mtv93LvBQolLAUChC0hhEBC9n3xvtuSrcWSJWuXjo7OOTPzfO8fc44sZ0+IE8DzzstRIp9zZs4zn3nm+3yf7yKqSkzMbzrm1T6BmJhXgljoMecFsdBjzgtiocecF8RCjzkviIUec14QC/0co6oQu3BfddxX+wR+41FFAYHop8irfELnJ7HQzyGqinZ3gF9QZjYKrgsYiMX+ihObLucKVUQVGTil8sMvonf/SCnkIzMmNmVecWKhn0sESE9BxjPIT/+L8Gv/oDabQQFV+2qf3XlFLPRzRCRmoHyKqJtACjncXXcT/t0HNOjvASQW+ytILPRzhIggImi6AvUShNlRFIvb14H+44c1bN6nYm0s9leIWOjnGhEKoSVf8Mll84TWwe3vRb7+zwRH9ihhGNvsrwCx0M8RpfBnDQLEKo7x8JwE1g8JChbpOI5+/8vo8SOq1hKHS59bYqGfQ1QVzYwi43mM8bBW8AshqGALIc7RQ/CTm6C7k9jheG6JhX4uEYGhQSWTRdUlDAB18AsWv2Cx4wVk9+PYe25XHR0GG9vr54pY6OcSa9HODujrIyhYQl/RUNBQwBpCC+FoBr37p4T7dik2ttfPFbHQzxGiig4NYo8cJBwexgYWtYJaATUohhBDzgo6PIj84qcwMhIL/RwRC/0cErYdV3/vTmyoqJrIwVIUu6pgEdREXplwx6MEu59UAI1NmJedWOjnALUh4WAfwcN34gz2EKn3GWZqVVCLCoRi0ft/gfp+vDA9B8RCf5lRayG0BLsfVbPjPiwBEEUwGgWZ0LsihBh8VH2sKHbPLoKONsWY2N34MhML/WVErUUE9OBeDX/wLYKhEcLQRuJXjdyNpT+29N/R7qhVcAMf3bcHIJ7VX2biMN2XgVJyhQD+/n1qv/YltKOTUJziXF60XKT0WrBEP0FQBBGDOII90fIqfpPfXGKh/5JMiFyE8YfuVf3hjQQth7DGRgJWQVWRCWFHRMtNAxgEAYXA5vH7e0hFHxzHrb+MxEL/ZSiJXJXc3bdrcNPXsD0dhA5YVYwKOiFkLc3dqAACtih0E61WMZ4DXtGajEX+shIL/SUSLRYV9X38n9+q3PodpPcUYcFHHAdHoplcsYBgUMRG7zGOIRRAFGt9rBgUwYjClOpnOlj0Mxb/SyYW+ktG0Vye/G0/VG75NmZsBMIQB4HQghhUwIqi0VoURw0iQiEMUYSAACNAdBtAGJJYuDj6dKuII8UjRcQyf+nEQn8J2DBAs2Nkf/QdNTffiBsG+GGILW70iBTNj0k2uSiItYRiKAgkxCChxTGR5EUtOSskFi8vviF6atjMMLb1qDqzmkRq6sDEjrKXQjxqL4KJ0hXZLOO33aJy800wniOXyxMGAaoWETPhMtTSVG4VRxxwXHTbZSQvuZKk6+G6JjJtLCTUYGfOw5m3UEoLUQFMUEAevgX78E+VQi7eNX2JxEJ/MWhkk2d/9lMdv+lr+IVxChjUONECkygXNLLEI8QCocW4HsHGbZT9/sfFbT2B9fP4YUCuGItuAoO38TWIl5hwVaKKHR1WkxnG3P8jbOshLf0+5sURC/2FUpxlc/ffpcHN38Ep5AmsEghYgckW9OSNIWMMifIp2Asvpvz3Py7adVLd9jYIFceCKx4J8QjLy5BNW1CRsxadZrAP+vswfV3Ye38AgT/hm4954cRCfyEUZ9DCjoc1+N5XCDP9RXtcUQMqkRtRMZFQif6ICLgesuVSUu/5gLjTZ8BjD+MgWAwGh4Q6eMZFVq3FbZofKbwodPULaOtx9FQPiofsepiwq01FTDyrv0hioT8fRUH5rS06/l9fIOzpxM9li0G2FqOKqEHxCCRBiIfiIOJg3ASyYRvJd7wHZ04jai26eycFa8mLEphou0hDxVm5ASmrOHNYa6HvNBzej+ZCCr6DjubR/TuKpxXb6i+G2OvyPChg8znC236Ac7INVSXhGKIgW4ol5wRbNGGMGkQg6bkEK9aQfOf78BoaBWMIu7uQzlYCA4EjqFVclGBKJYm5CyCRQIyBMITAx+7bqXpgD2EgqDogDuHRw/FFewnEY/ZcFBeFhSceUnPgSQgtNgjxXIcgCKKXoIQmQAkxFhwRPBGCxnkk3v8xEvMWTBjc2tutrvUxjuB6LqoQBiF+KoGXTkf1GQMfjIPfckzDH96IjI6StwFewsU4DranG5jkwox5QcSj9RwoEGZGyT10N37vafxCnkKhQBhONhsE1MGo4IjihT7BtBkk/ujPSM5fKExaXGp/LzgBknAwYqL3GghGBim0HcfmxqOYl7YTGnz273D7eyjYAMd1oiMpEITFk4tt9BdDPKM/CyWfuX/kkKZOdeIXCpEHJZEAzsyogsFYDxTE5pDp9aQ/8RmSC5dE/nBjJpKepbIKsBRyGUy6AqsKoSLqE970VTJHDqqTSqGP3oubGSZHlJQRhCFuMW4mCC2JV2tQfo2Jhf5chCHB0YMEnSeR0kZNqf7zBAoSkjIewYw5mD/4U5LLVp4ROZFXRkSQmQ0SJNLqWQhtFPsixdp1tvc06XvvwIiQwydnANFJ/nnAOCQa5xf/X+OQgBdBbLo8G6rYwX7MyRME2VEsUShuyRQpxmQBiusotn4a3gf+gNT6C88SORRroqtiZswkXLqaZMKbOEbJJ25FydqArA0JRIjCwRSN7oQo1j2XR5eveYUH4jeDWOjPQMls0eEBdYf7SCRcMAZrir7xKHwcx3NIJDy8qVNx3/YuEpu2RZPss8SjiOPgXvN21HNxPUEdwRoBUVxVHAQjBteCsYoJLSa0uAqe4+LXN2DWbYiOXnpaxLb6CyIW+nMxloGxYbyEixiZ2Pw0EnlNvEQCkinCi6/A3Xa54BXdg0XOEmFxVnfWbBR76dVoGOAmXcRzMQKORiUyRAVHwbHgqJDAkDYOKi7uNW/DmTZ9Yh06kb0U75Q+L7GN/hyoDQlsgBqLiOKogkSmiJf0MIAuX4u57GqoqJzwrlhrz1TTnRxKLoJJJEi89b0SBqrefT+PNp0cDykGhIljMGoIxUGMYIyPFQgvvYrktktFJz5XyfoFRgt5apJlJN34Uj4X8eg8GyLFGueRHS1YTHFlqFKcRWtn4F7yOkzjXDEmatmixbS6wFrG/QJpL4HrOBO/RwymZhpl7/6QBE2L1f7k+5iuDkJ8jApmItRXsK7LaN00Em94BxXbXiemorL4xFB6x7P805OP6eHhQd4ybyHvWLxMyr1EnJvxLMRCfw6M6+I5HjaEwBhENEp7k0js4cKleKs3iHHc6KYozuSPnuzQz+18lN4gz6Lqat63Yi1rp88Wp6hCcRykohLv6jeJ3foa/EcfVHY+gT1xjISfYzxVhjbOQ1evo3LLxZKcOh2rihgTxdiIcPB0rz7U04tNwMODvWwda9DF1TXFZXLMU4mF/myI4FRPFaeuXv3uk4gLisVYEGNwps9AN1+CU10DMBGpeKC/Vz+550lyqngC+8YG+IcDj/Mp9yJdPXW6GJkw9MFanOoanNdfK7z+WjQM0SCgwvOYXNslLN5A1kYhwEZgRkUFsyumkDHKvLIpVCUSscKfg1joT8EWa7CIMWh1DTpjFhxNRilxKF4YJTPb6fWYpWsm6hGV2ip+u/kgY4yjhTxhLkAcOJIr8GRfN0uqp5J0HEpil6KYSz56cRzEcUonAkTenVG/QN94VvNhQFUyJTPKyllQUyN/unatdoxk2DSzXmaWVxDz7MRCL1KyoU9lRsgX8sybOh3KpxDMX4zsfxQ3UyC0guKCk0AXrMBMrZuIUy8Jvmt4BM0HENho4WrAU0vgF4gs+8j2meyRUWOe1q2udBO0DQ3y8/bj+vjpU2SCAo1VVXpNwwIunt0kG+pnyvr6OJf0hRALvUip6e09nSe0tX+AT265VBzjYBatEKmfqU5zDwES/ZNM4S5acZYwSzfKRTPmsPd0H0YksqvFMLusnNW10/GMgynK8ozQBVP0yz+12W7X2CjfOHpA7+46STbwQaA9n6djLEfKuLp5doOoWmK7/PmJ/ehFSiJ7tO80u8czHOrtUQCnfg5mxXqcdBpXwLU+4lqYXn/2+4nEeu2iJfLGpnm4ChiXuVNq+MCKDayuqxen6BoEGCnk+Ulzi/7fx5/U7x88oH3ZsYnPsqpkA5+7Otr0F50dDOXGCWzUBymfy9MxNsrNJ46RD/yoakwpaOzcD9OvLfGMzpnZeCiX48DQEGEQcHPzMZqqa5mSTKJbr5L8sV3qHXocER8pT6I102XCnciZG6U2neYjF2yUxqpq/eK+PSytruPiWU1SnkgiRCLOBQFfP7Rff9HdxejYOOVJj67sqP7uqrVSUXzdYG6cBzvbGAt8rLVYVRzjYFUZGc1w0EnQNTbKvKqayBzSaNFqRDBxpYCnEY8ITPjLj48OaSZfICxYnhgY5K72DgUwtdPRN/wOYXkaqTKQToBbimI822wwItSm07ymYS6Lq+tIesli7ZaiZ0aEwVyOn7e10jM6xLg/RndmmDtbjzOcy2GKs36uUNCugX5UFae4GRTaEFWLY1wCdRnJ+5HGi1P5rS0temJ4WEvHijlDLHTOiKJjeDhKbQP68zluOnaYRzta1VpLctEayb3j42QdA8nEc1bNEqA2nZJVM6bRk83Ql81O1HwByORzOjA2ig3yFAp51EBeLL6NYs2tKkaMeLj4QUAYhk87goMhZVxsMQn74EC/fuHIAVrHMhOfEXOGWOgw4e7rHB3BOkpgQ3x/jPbRHm448CQ7uzvVDwKmbL1awms+Rjbv81wWsRFhSiLB/Mpy2jJ9dGZHVYycFZsiNodqiOcmSXlJ1tTXUZVKEWpU/qIqlWZDQxPliWS0Y4pgRHCM4BCyqCzBvOoqcYxhMJfjm837GfOU3mzmlRiyXztiG30SPdkxUCUsbvkHAvuzWb64bycfXrVe18yYKRWX/5aMTm1QDYOzfB1RqMAZV58RoamyCrEhRwZ62ThjNp5jGC3kue1EC6Hr0pCeQhqP+TVVvHPxSqqT6cgrY6AmleIdi5aQyfns6utn1M+hBCRcYW51Ne9ethzPccj4BX7celQf7elgzLd0jYy8CiP3q08s9EmM5XNoaIuijVLdJLTsGR7kc/t28WFFN86aLRVrtslTRT5WKDBaKFBblibhOKAwq3yKLKudqQf7hujLZqmvqOB7hw7qzZ0drKxr4CPLV1FfXiE1qTTlyWQxPr0YFIawaOo0+fjGTTzZ2a2tI0NgLDVlCbbObJSGqmp8G7Kjp0tv7zjOaN4nlUiQyY0DZ55SMRGx0CdTKrElxU0ditXhMOwbzfClfXsIg0A3N80VnbTB05vNcnPzUT2RHaKhvJzrFq6QaekypqbLaZpSw/cOH6Z9ZES7M6Pc1NJCUgxvm7eIDbPmSMlrU/p5oK9HHzvZwdKqWrbNmy915WVctXj+hGwnPzc6R0e4ufUo7ZmR4nkSFTmNeRqx0CcxsfGiUWaP4Ez8zlNLy/gY/7b7Cd4XFPSqBYulJLmHT57Um5qPMqhjeEaQUPTDazeI5zjMr6ommUpy98l2OkeGGfEDttTUcsmcBim5NaOfcE97i379yGFaBwd5y6xGts2bX8xmOtNEwFrFGGEwN863j+7XJ3t7CIvFlM78iXkq8WJ0EtWpNAnHxTUOYhUThLh+gGdDQkJ8CWjPD/CN5v3c3daqpUCrUwPD5PIhBAkCm+Se9g4y+TwCNJZXMC2R5NYTzTw5OEDeL/DmRYsoTyQmnggiwiNdbfp/DzzO/pE+BMvWpnnRSemkThkCjjFkCnm+sHeH/qKrg7F8jiAIsGrJ+z615eVA7HV5KvGMPom6dJowDBGiss5vnb+YdyxdKb5afaCjjf9q3kvgGpqH+vn64UM0lE/RxXXTZEltDdO7K+gJCoQ2pD8f8Fh7u7528WKpr6iQaQlPs6oYgZVVlVzY2CilvFNV5VB/r/7nwX00D41AqPzxxktZN2t2ZB6VEquBvO/z0Ml2/crBfXQE44zmxvF9HzFRVw0RoTZd9iqP4q8msdAp+a2FpsrqaIPGRB0pmsdGydtQF1bXysKaqayfMVM//MDtFBzhxOggPz3RQkNVJZcvWSTJVEJvOXqQrkyGo2NZPndgH6mEqxfNnS+Lpk7j/oFexlGuW7KUhONEu5hG6M9m+frhPezuPwUFy99vvZyrFy6RsChyI0JPJsOtJ47oj1sPM1AIIIBskKMQhjiOiZIxivmsM4ozemypn00sdM6IorGykkIuFyUeCzzZ08WnHrqb1zXN10tmN7Fkap38y+bX6n9/6B5GC2M8MdDNhb3dumnWHNna1CRbGxsREf798Yf0W63N/OP+HYjrqieGhDhUqOXSOY1RjwsRQqs82HlSdw8MkDYOf7TxQq5auERCImulKzPKz46f0JtPNNNjxwi0gDtuJ+xNx3EQgTAMMTiUuw7zq6qj2r6x1+UsYhudM6JYMHWaNFZU4nkeWMWGluPDw3xh704+evftfPvIfl1QUysfWr4az3E4PjzInv5e8kEQJUWIEKry/rUb5A0NjfTmstzW1sJwPk9luoyLZs5hSjpNWHQjnhwd4e7Odoaz47x70WquXrhMrI36ku7o7tK/evh+/dKRvXTnM/jjBcLxAON45EPFKthACUNwxEUwNKWmUJsqO5O2FzNBLHTOCD3hOGye3TAREhA1vrWgMBgG/N89T/K/dz2uC6prmFVWjo+yq/80HaMjKiLFHnNQ7iW4fvFK5ldU8uipkzzU3c5oboT5VZVFu9wSqnJgsFcPD/WxvWEub164VNKui+s4PNDZrv+063F2D/biBwV8P4+1IUYcwjBg1fTpLKiowpiosoAt3jjrptfjOSZeiD4DsdCLlMR90aw5SDFlrbTbaVWxYUhoLbe1NvP5vTsYDwPyhQL7e0/zWHcXuSAoxp9HtnJjVbVc3bSAvAY0jw0wmBthRll6ogjScH6cx3pOUpFIcGXDXOrSZRgRdnV36f/Zt4uO8TEKhTx+4CNG8DyXhopKrl+4jP++7kLWzqgnmUziGINxDCnHYf30mbhiYvv8GYiFXqQU2rp6+kxpKquIwl0nPf5taAkLAVjLkeFBTmVGEYVMocAtLcfYc7pbQ2sJbbSRlHJctsycI6tq6wgBN1RqEtHupyicymR0b08vF0ydwcppdeIYQ+fIEP+y4zGOjwxRKBSAqNaLDUJWVtXy0VUX8PsXbBLHGB7uOknohxM9jZZVT2VhTa1IHKb7jMQjMglrLVOSSa6auwC1eqYKbnFGTyY8kl4SG4S4TrQHacOAE8NDfGHXTvZ2d6sxZ8pkzJlSxYa6WVS6acokSYWXiJKcgSO9/ag6rKmdRnUqhQA/OHZEj46NoqoEQVhs8mXYPH0Wf7B6A9vnLpDB8Sz/vuMxTmUyBL6PKngqXDyzgWnp8ng2fxZioU/CGIMRYfu8hTKvqvqs3zWky7mofhYJ36cUA65qIQyxhSxHh07zFw/cx5d27tB84CMiOCIsqqqlPlHOFC9NdVm5hKrkfJ/7T3ZQny5j9bTp4hqHA309em/PSQpBHrUhqiHGCGvqZvChNetZN3O2dA4P8ZcP36sHRgbP6j06f0olG2bMJOm68SL0WYiF/hTUWqaXl3N541x8sRMxKKHAH67fIj+7/nfk319zBW9smEetlywmRVhCP0d3PsuXjx3iupu/qzs6O9QxhrqyMmrLyhAjuMbgiHBqLKN7hvpYXl1NU00tALefaKFrZJhCLh9V6AIaplTx7qUruaB+luzoOqmffPhe3d3fy2gmCsVVMXiux6Vz5rGwujZuDfAcxGPzFIwxlHkeV85fyOr6ekKxhIFlSC1/+eDdmink2NY0V/7m0tfKd990nXxgySrqy6twk+UUwpDh0RE6gjwfv/9Obty/WxOug5swBPgTC977TrVRO7WcTfUzEeBYf68+2dvNeC6PJw4OQnV5BVfOaWJD/Sy5Yc+T+if338n+06cICoWoiYBxEBzWTp/DaxqaSHveqztwv+LEQn8mFOZWVMl1c5dQl56CGmE8O86BwX7e95Mf6S1HDmpzf78mjMuHNmyWf7r0dVxYV8+UlIdxlGA8R84x3HB0Hz88up98YZwgyIPAeOBzW1szFaFl5fR68cOQhzva6cmOIao4Iqi1zJ9SyYUz5/C5XU/olw/uZcgvTIRsWQyBFWbXTuXqprksq50qk/NWY55OvDP6DIgInuPwmllN0jIwpN9vPkQu8BGgKz/OPzz5CE1TKtlYP0vXTq9nVd0M+cTmi/jagd168/GjZIOAsWyWvCvcfOIw1loSocVaywMn27Qjm+VPV25gSipFy2C/PtTTQX92lNAGuJ5DwhXW1kzl5pYj3NHRGrk3J6XiiSiJhMfFM+q5vLFJSi7NmGcnFvqzYESYWlbGO5YslYFCVu/rbCc3nicIAowYToyMcGJkmJ8db2Zj/Sy9esEiPrDqAvEcR288ehAR8AOfIWtJeB6ViRTjvq83HN7NvGSay+fMlXwQ8HhXB0eG+iciGQNrMQXloZNttIyMEBbjz0UErEbeHtfjsjlzeNeSpVKVSsX9jF4AsdCfC1Uaq2p43/LV5PwCj5w8iYbR7CrFVugD1nJH+3GOjQzytgVL9H0r1smRgX59vK8bEQeLEOLgOAnubGvhcGaIjy9YRV1FBS39fXp/23GGstli6xbBhiEFVY4NDqBiJrJMHROVlHYch8vmNPKhVetoqKyK/PLxbP68xDb6c1BqybKwZpr84brNsqV+FumyFKHvn0lxUCWwlhMjw3zl8D7u7WjV9y9fQ1IFYwSjFrEhp8dH+V7bMZZVVPOmpatkNJ/jzuPH2NPfS2gENVEorrEaFTKFiTh0AYzjgAiXz2zgj9ZtknlV1bFd/iKIhf48lGLBm6qq+dTWS+WK2Q0kU6mJrooqUZ1EPwjoHc/yb7seo38sw6a6+ih5w4ZooUDehoyOj/MHKzZQnkhyT+tx/U7zYYZCnxCiBgDGibpQC6gKtngQNYKjwnuWrORPNl8sM6dUTtR/iXlhSFzo5oWhqliiIkI37tulX9i7g4JAIQgJNYxS4gwQWmYkykl7Hp1jY9gwwHUcjCv88dpNvHvVBXJf2wn9i4fuIosSBAEixSYD4qJqkMDHqiE0Dl7KYUbS4/dXbeDKeYsk4Rhc47zaw/FrRyz0F4GqEhbHa+epTv3czsc4ODKMr4qqJQgLUcOtUkB5MeCqNuHxB+s28Zqm+XJ7y2H9pz2PEwLYEEuIsYqowbdRaaKEOCAuSS/JxmlT+ej69SydWieRGR/P4i+FWOgvgVKUYv9Yhh8fOax3drTTlc2QCwuIVXwbgI0qaPkasm5GPWvrZ/PYqQ729Z3GGEMQBjiuIMZiMDh4qBhc8ah2y1lQXcO1CxZwaWODpL0EoMVu0zEvhVjoL5FSixVV5eTwMPe3t+qu3m5Ojo7QNTpCLoxyOa2AJDz8MACiJrpqFQyohFgNSIpLTaKcmWWVzKusYUt9A1sbG6UymZwoJx3P478csdB/CUrx6iUXX392jIN9vdrc30f76Ai9hTyjfoHxQoFcbjwqN5dwEYWKZIKKZIKaRJJZ5RUsqKxlaU0d82uniuc6pYLpsfvwZSIW+svAWd0riv8/kssxkMvpaCHPWC5PwY/iy0MjJFyHtOsxJZWiJpWW6lQarxhDLqV/aew6fDmJhf4yUipPQbHC7eR2jGeJtpj+Js8wY8fiPjfEQj+HTB7byQJ+tt/HnDtiocecF8T+qpjzgljoMS+JXzdLII5ePAe8HDa4lha0kz7jV8Gen1zzBn41zumFcM5n9NIFm3zhXs7X/yoy+fyttS/5e+TyeXoHBhjP5V7mM/zlGBoZ5fTAAGEY/tpco3hGf5G8kNn6v269WXt6TyNiWNzQxOVbtsqUiooXNPuV3JE9fX3c+OMf67H2dpbOnct1V18ts2bMeNXLzT2xd59+/dZb8f2QbWtW8bbXXSnlZWW/8jP7ORO6qjIwNMR9O3dqz+AQgShpz+FdV1wlZen0015vrcUYw8N79ugTR47gOA6uMVy6bh1L5879tSicWRLhl2/7Mc0nTqDq8qZtF7Fh1WoqystfsND9IOD2u+/TL9z0IwZGR5k2ZQo1lTX6jje8XhKe94qPQ+nm7j7dyz9/5Svc9vAjJFNJdh85SF1tjb7+kkvk1b4Bn49zIvTSY/tU72n99o9vYWdzMwVjSbjCNZu3UZZOP21mKs2Tdz36GDfc+hMMhnLXoTaVYnFT469MQNPg0BCn+/o1l88zr7FBqiorn/aasUDJ+oKqQ863Z+V7Ph/WWmxoOXq8jb7hMdR49A5nONbaTi6fj0J+X6VKXN2nT+vhlla8ZArjefQMDtLc1vaqnMuL5ZyOWOD7DI1mGBgdoW9khKGhzLNf9KLSc4UCQ5kMg2MZhsbH8MOQV7vad8nOfmTXHt3yrvfoW/744/z5Zz/PkeNt+kxrCbUubpiE0EWseVE5ncYYPM9l24a1lCWEIByjsszjghVLKE+ncZxXJxZdRFi6cIEsnNOIqCH0LZWJMlYvWvyqnM+L5dza6CIECtkgJBDFFZ53drNWUSv41qdgYKIs1jM8Fs8s9iYOhzHmBT9CSwKevE3/TLNl6e9PDwzS3t9PMpmmLD1MGDzLYkwlilAkQOXs0nal5ril4z01PMAYg6pyxSUXy3er/0F3HjjA2mXL2LR2rbjPUolr8sK3ROm7vFBzafKi+anvLfVZSqfTfOn//7R8/sbvat/gIO+65vVsXr/uGQ9g7ZknmRiZ6Mjxapk353gxKoBBcBG1OC/A/NDiOLjGISEuz1QbthQ1qNZS8H0KfgCqeAmPVCIxccGe7RE/IXAiz0YQhhgR0qnUxGsmv9dai4gQBgHGuIShxRVFbTAhsrNmWoFQiyInnPgMiJ5YfhBlHaWK1XDh7PWHiOC5LlsuuEA2r1v3jDfExDgUv2to7cR3cYwhmUjgPVuszVPeb60lVygQFG/ChFcaR4opgzIh9prqKj71kf9vYs30VBO09D1DaxnP5SY6eyS9BF7xRn01TK9z7nUxCI46UcKNOM97RyuAgFiKIj/79dZagjCku6+Po+3tevR4C13dvdgQ6qfVsmzxQhY2Ncrsuum47tPFbq0lXyhworNTj7a1cbi1lb6hQaaky1nc1MiSuU0smNMw4SXJjI2x69BBzfk+u44eIsTHiGU4N8JjB/Yxksuq7wesWLxImmbNwnEcNPCxBBP11VWVzu4eDjQ3666jR+gdGaKmspLlCxawesFCGutnSjKRmJjNAXr7+3lizz4NreI5hnUrlkv9jOkT41cS6NDoKK1dndrc2kZzeweDmRGmJNM01tezeP585jfMkWk1NTz1aaCq5AsFTnZ364HmZg6eOM7ASAYRYfb0aaxYuIhFDY0ye/p0HOfMzbj/WLMebW0j6XqkUwkuWLFCptZUT5x3rlDgWGurHmg5zpG2dkbHs6STCebOnMmyefNYOn++1FZWvuKz+yviXiy1+BaVYnFOnZglS1i1OBgsGrUQJ5otJncTVFWCMOS+x5/Q79xxBw/s3kPf6X40jNoXWrVUVVdw0foN+o7t27l88yaZ7O1QVTLZLD/6xV36vTt/weOHDjFW8AmKnaKTRlk6ZzZvvXS7Xn/1NdI4axZdPT36jzfcwKOHDuCLEtg8oUJbf4FPf/UGXHGREP7mox/R33vbW8RxHJxCHkRRDSkEBXYcOKg/e/Ah7nz0EXrHRgndqOJueVmabStW8d4rr9Yrtm6RyoqKiVl21779+vt//RkKVkkb4bN/8Wd6zWsvl9KN6wcBR4636A9+cQe3P/IQLR0dFMIAVUiLh1qhvm4Gl124Qd925XY2rFglZanUxCyc9wvc+8Rj+rUf3cIDe/bSnx0jmmGiGOHp1VVctfFCfc/VV3Ph2rXiOAZjDF+5+cd87ZafUpbwmD2tln//s/+hWy+4QACGMxl+eNcv9Iabb+ZAayt5G2VFGRv1P50zvY43XXqJ/u61b2RRU+Mr6ql5RYQePcJBi4P83C8m6u5AaRF3ZidORPj5gw/pP9xwA/vb2zDqEAZKynMxrjJcCOgZGeb2Rx7hcHML47lxfdP27ZJKJSc+/qvf/6F+6Uc30zs0SLZQoCxdTjqdYCQ7xnhhjKNdnXzue9+jd2hY/9t73yvWKn5gyYzn8TXETSQIA59QhawfoDZEUHKF/EStck8VJcRKwKGOE/zzt75Fc3tnFJMe2qjei+MwMl7gzl27Odl5mjAI9drtl0miWEMxtJZsGJJTi29tlJ7HGXNjz8HD+q//9Q3u3fUEo7mxqJqXAev7BBLiisfJ3tN8++e3s/fEMf74Xb+tV27ZKslEAkHYd/iI/t1/fon9La2MByGV5WU0zZyFqtLS3UX34AC3PvQgg0PDfKq8XFcvWyoAucCijkdGfQIncoWKCGFoueXue/Rfv/Ut2vp6sarMmFLJ7OnTGc5k6ejrpa2/j89///uc6uvl3/7Hf6dqypRXbF/gHAtdwVGsE6IqhCh3PPiwTqupjjrBGafYCTmqUFWWTnO84ySh2jMx3RMLTeFgS4t++guf58jJDsRzmTqlnKu2X8iWtWsoK0uxv6WZL/7wh2TyPs2nuvjKLT9mQVOjXrB8uRhjeGLvPv38t7/LQDZDwvO4ZttW3nzZZdRUVTE4OsK3bv8p9+7axVCY45b7H2D5wkX6pssulfdee62+dttWvveLO9nX3oGTSFBdXs4VGzawYuEi8vlxtq5ZjedGwxkYt1gjMeRY10lEEzTV13P5BeuZXTeNgeEh7tqxk70dHRSAw51d/O8bv8Oy+fN05ZLFxZku6janqoTWToyTiDAwOMy/fPkb3LN3L9lQERLMmz6VizdeQP3UaQyPjnD/kzs41taBD+w4epi//8qXqaus0gvXrBWMcNv9D7DrSDMqwoI5s/ngW9/KxhUrQGF/8zH+8otfJDOW5ZH9+7jj4YdZMn8eZel0UdQ+4iohQfSkFqGrp4eb77mH7oEBAt9n0fSZ/PVHPsKcmfWMjee49cH7uenuu+nr7+eWe+7hza+5RK/dftkrNquf8xm9ZGVbsRRU+advfpOE6xHYEMd1o/QyiLLrDfSPjBBgo/bkcqYxrIjwhe9+l8Mdbag4VKUq+N03vpEPvv1tUltVhRjDa7duYU7ddP3kv32WMQ154vgx7t21i2ULFlBRVsatd91Dd18fVpRl8+bxZ7/3eyxftFCiXkCwbskSfd0ffoz+wSFODw7yxIEDvGX7dt60/XIRYzjcekL3traTTCaZUl7BFRdeyJu3bxdrbbSwLC5Iw0QSUUEwqApbVizjE+97H2uXLJGyVIp8vsBbX9um/3zjt7n5oUewCIdOtPKDn/2c5YsWTTiYHPt0x6qI8L1bf6KPHDhArtjX9KKVK/j4e9/N2mVLpSyVJl/I887Xd+pnv/kNfvTA/agqh9o7+OZtP2XNsuUkEwl27N1PGEabdEvmNPD6bdtomjVLFFi3bClGRDu7e2ior2f14sW4pcW2CI7rEKo/kU0F0Nzepie6TpLNj+OIYeuqVbzx8stEixuB82fPomHqNA2tpaZiCkvnzf1NstEF0TMXy6L0DA7iei7WyFl97QFCtYzn80XvhndWw+/Onh5+8cTjBNaCcVg2dx7vev1VTJ86NTqSCOXpMt5yxZVy0+0/10eOHSEb+uw8dJDe/n7KUik+eP118varrtTewUFSqRQrFi+S0iysqiyZN0/mzpih/UNDOI5LZnycsfEsM6ZOw3EMruPiIqhaQhuS8DzSycgsmrzoFTfyn4t4zKqt5feveweXb9okpaJD6WSSjStXyMeuu07bu05z7GQnYSHHT+69nz/54Aci709x3Jziz5Kg8vk8P7jrLgYyQ4RGWDK3kY/99jvZvnnzRFuXslSK6soq+ZP3/Z72jYzwwMEDqLjc8cgTfKyjUxctmBf1MXUc1DF0dPfQ2nGSebNnR40PPI/3XHuthGGI4zhRObyS2alKaMNoB0YNWrp+IngJD6OGhOPx5P6DtJxo1SULFwhA46xZfPj66yfOsXTj/MbY6E+1yY0x5PMFrBMtyJxJC0UNLU6oGHXwjFMUemTC7DtyRHuGhlDj4DpC/9Agn/v2t/GM0bw4hAiuhnjG0Dc6TMHPY12Hzr7TjGTHVFFpmD2LhtmzpGQOBEFAV28vB1pa9LG9e3jsyBH2nDgBCr5fIFd0j0mxWa0o0Q6tBVN8VE12/U1E9mFwxAXjsGruApbPnRv1RCoKxhiDtZalTY2yfsFCPdhyAmOgs7+fjs4uXbxgvmhxGtCnjOXh4y366OEDWMfBuA6rF85j65rVZ/nYJz5/7jy5YuNmfXD3fgIPOoeG2HHwEEsWzufCdau5+8g+wiBgf0cbv/vpT7Nq6WLdtHwFF61ZywXLl0n1lMoJ9+KksyCZSjHuj6N65veLG5tkerpKj/pR1bEjnV287iMf46IL1urmNavYunYNS+bNk7JU6kXtFL9cnHuhy5mLlXQ9/u6DH6K2qpLA2rP2gEJrmVJezpd/dAt3PPY4VgWLYG307pM93YSqmGJ7wRNdnXz1ZAdGlRCDxUGwqAaIIXKnGcNwNst4sXh+GIb0Dg5y/+NP6B0PP8K+lhY6+k4zViggnoPrOFgbeXakeDHOCuJSRWwATgL7nBNRiBUlRJhSUUZFedkzlnYuL0szraYKB8WijPsF+gYGWLxgPhbwDfgKxp45j+HRDL5j8TyXpOcwb2Y9VVOeHoZgjCGVSrGgsZGpNTX0jOWwBkbGx3Ech9++5hru3beXPcdb8HN5MuM5Htm9l4f37OWz3/gWM6pq9LKNG3j/dW9jzdIl4jqRa1iMEIZBsfpB9H2stcyqn8E733A13YNDdPScxjMOI9kstz30MD+47z48z2Nxwxz9rSuu5N1vvFrqp017ESr65Tn3Qoeon70VEji88bJLZFZ9/dNW20EQ4HkeDx08qHft2Y1jnOgmKW0geV5ksyM4AlXpNNNrqkEtRh0UA1J8Bogt3mCGxrrpJIuBUM3t7fpnn/0/3P3oY+BGmyrTamuYnU5RWVbO8nlzueuJJ2nv7sZLJCaOfVaxz+L6+Ll0riacWIArzx7rYm3UBGzCtDOc2UVF8Y0SWCUx6WDGFMWlFhEt5mI/syer9OSyEK15EGwYeW+aZs2Sf//DP9L/+P732X3kKAPDIwyMDDPuF8AROjNDfOe+u9l74jif+ehH9TUb10fbfRpVJXPFRYx71o71O99wtSSTKb3hu9/n9OAQo+PjjIyPEbjgq7KvtZ3DX/kqjx04qP/x55+UqTXV0bj+JixGDQYJBUcVEzVaA85EKwIwada3VgkFVAOiuuDR7xvrZyLqgLUkXJfL11/AR65/R/SXWpotz45jt9aSTqVYOKdBxnM5Pv0fX+TOHU/gq0/9lGlcvXUr2zdfyILZs5lZVyd1U6dy1Yc/oq1dXRTgaY1po11MQVQhsBMxLE+9acVGN4TFMpQZIzM+rqo64WEonWMmO0bvwED0Biwpz2X6tKnFTykZL2ebL1Orqkl7SfKq+FZp7T5F7+AA9dPqomPLmVk2l8/T1tXJaGYUseCpZWZd8fNFWL10qfzTxz/O4ePHdV9zMyc6Omjt7ORgexv729tA4EDrcX56/wOsW7aE2upqPAWCEHEB8YEz38kYwztef6Vcvmk9uw8f0ebWNk50dtHS3cXeE8c52T+AVbhv125+dMdd+oHr3/ab43Wh6H0whBiNli4iUuxjf+YLOqZ0OaM64Br6CIIj0UCsWrRIZlRP1ZOnTxMEIQPZcabV1DK/oUEi4ZzZrm7u6ND2U6cwCMnindXa2an37tyBj8UxDhuXLuF/fuiDUldczDrGkM1m6e8fxHUcQqKiopMxEplTqEIQkssXnvk7h4JrXazxOdp+kl2HjjK/oZFUMhENiUbFRQ8ca9a9x44hKNiARXOamDVjRrG0i0Tlo/XMjSQizJ0zR1bOX6h7j7eiKuw82sz9T+7Qay+7TFLJM/sFVi3H2tr03h07CQMfV2FmdSWrFi0iCAL6B/oZy+V0OJOhvm6aXLBiBWEYMprJsPfoUf2Tz36Wg51tBGrp7D3N4PCw1lZXi2MVg0FNAFKA4ijlcjmGR0fJjOe0p+80m1atlO1bt5AvJo/ccv+9+q/fvYnewVH8IODJgwf5AG/75bT1IjjnXhcrRAvPEKw8/90rCEZNJKjibwCm1dbyntdfyd9/9euoCDsOH+aL3/seH73+ehpmzZoQ+d6jR/V/ff2rHO/qQkLYvn49H6t/J30Dg2hoIQhJJJLUVFVTVVk5cZR8ocA3brtNO/v7zyxAJ6bS6D/Ky8vwnWgDbGAsw/279rBt3XqdVTdNjBESiUjIkg+LZk5A98BpvvTDH2KM6JVbNkvllAqyuXEe2b1b//OmH3C8swcbRLvHb71sO+lUMVZfDLYUXCoOFOOE0uk0v3P1G/gf//bv5EPlWGcXn7vp+4yP5/V127ZKbXUVQRDy2IED+tVbbuPxQ8cQk8AElqu3XMzsmTNlaHiYP//Xf9aB7DjD4zku27BRP/T2t8u0mhqqKiu5ZNMmWT5vrh7qaMc1Dq4Bmbhw0TVV0TN2JfDYnj1648/v4PTwKCMjA/zuNW/Q977lLeJ5HrPr69myag1Tb/sp3QNDWAuOeWWDu875hpGKYsViJdo8ej6MFYwtBoOJg0wKBPvI9dfJvY8/oTuPHGVsbIxv3/4zDrUc11WLFlFdWcnpwSEe2rOToyfbKFhles1UFs2fR211DbPH81LuJnSULAXf55H9+/nXb3xDNyxbRv/wMHc9/jiP7z/IUGYEdR00tBMeH4hm1ZnFBZQ1MOrnueW++2nr7KG6LK2vvXAD73nLm6UsncLz/aIGLBbL3hPN/O0NX+bGn92mtZVVDI6M0NHTRWf3IKF1MOKwcdlSrt1++VkLdJ1YpEQmE0AYhrz5ta+V+3bs1B8+9CC+wo6W43R97Zt8+2d367SqSsbHc7R299Da28t4PocgrF+4kPe++U0kPQ8jwsBwhvv27UNdj47eIYYzOX3txgtIp5LsOHiA+3buQVQwqjTNnMG0mpro+CJYcTBaLHVdrCiWTCbZ09LGoY6TYPP0f+c79I2M6roli8nm8tz+4IN0dfeiYUgew8WbNrwM+nrhnOMwXXCABJYQi1NyDj/XW4qTl2NdTOgSVemMbMC6mho+96lP8MFP/w17TxwnU8hz//59PHj4YOSN8UMCP4+oJZ1I8oZNm7nmoovEc12a5szmqm1b+eadd+Bjae7u4l++cyNlqSgJJD+ewwks9TW19Oey+BqSC3z8IFCJ4MrNW/jb//wqo1jUcxj2czxw6CCOMcycMZ2guNBLJh18GyBeglnVUcBT91A/rT2dJBIe1gouBocEnrg0NUznUx95PwuaGmUiIhDwjOBbxaHoziTyptRWV/FXH/0IvlpufuhhAlc4mRmms3mUhDV4heK2vAOe67GyqZG//oMPs2bZUnEcg+u6/PHv/A77//pv6B8bp29giG/cdjvf/fntGEfIBYbRsXE0FFYvWsA1l1w+kSxjcSAwJEwCT1MIkStz/cqVcu1FF2vbd3/ESKHAiVPd/ON/fYN0OoEaIZstUMgHeAhvfM1W3rz9cil9n1eCc3uU0OKGIV7BJxGEaD6PteFzv8UvINbH0RCvuPCbvIhbumCB3PiP/0uuu+RSCKJIRN+G5Ao++cAHq0xLlvHf3n49n/nDj0ldbe3EmuBfPvEncvXmzQTZHAbI5QuMjGYYON1Phbh87pOf4J1XXIGElqRxyeXyZLJZoLihtHiRfPcf/56pXgo7nsMYg5NKYh0hLMaiAASBjw0L+IUCFy5fzmc++GFWNjSQcA1R53MhDEF8y8alC/j8X36KSy+8UM666GoxYQFPAxzrg55ZMTiOw4KGBvnCn39KPvP+32NmZQXW+gT4BManEORwjJAE3n7xNr72t/+TyzdvFNc9k520bcMG+Y+/+AsW1E3DHxtlfDzDUC5L71iW4UwGDQIuWrWC//2JP2XLurUTlkve9/EEPCDhmImFsue6fPL975G/eO9vUZ1II360GO4fHqF3aIBsdgxP4X1XvY6v/+VfSTqZfEV3Rs9ZpS5VZXh4mCf37NWB4WEAHMdw9fbtkk6lnjGO2RjD7v37df/RIyQSCRzjsH7VKmmaM+esCMTSYu7YiVZ9ZO9e2nu6GcmMUZ5MsbixkUs3bZDGOXPOWsRNzsx/ZMdOfXz/AUayYzjGsKShkddcuFFm1NXR0tqmj+/Zg+O4lKdTrF+1Suqn1yEiE+fY29fHfU88qc0nu8iFFvVzbN+0gS0XrBfP8/jZPffq4MgwjivMnlHP2uUrpVAocNcjj+hjBw4wNDpG4/RZbFm9kk1rVsqUKRXRxZi06dTV3c3DO3eq1WhGv3DdOpkza9bTxkxEONXTw8M7d+qh9lb6R0ZJux5N9bPYtmYNy5YsktJG1TO9d3hkhMd279E9x47SlxnBMQ615RVcuGoVm1avluSkBa6I8OSefXq4pYVE0iOVcNm87gKZPq3urASW3v5+7n7oEW0+eZKsn0OM0DC1jos3bGDx/PlijHlRCTIvB+e8JN1TP/9549FfwOsnD+rz8dQY7Oc79lM/85mSHZ7vWC9lTJ/tez7f3z/fODxf4sWLPbfnuj6/7PmcS8650M+kaEV+7ue7k5+aEvZcr3+mfM3Jx3muc3rq55SOM/n4z5XZ89R4+tK5nv2dz6SlRRlNOrF4m/z3zybCX24czj6nZ+OZ3lsS4zO996mpi8+X+RRdjuiavJDzOVfERUZjzgt+NWpIxMScY2Khx5wXxEKPOS+IhR5zXhALPea8IBZ6zHlBLPSY84JY6DHnBbHQY84LYqHHnBfEQo85L4iFHnNeEAs95rwgFnrMeUEs9JjzgljoMecFsdBjzgtiocecF8RCjzkviIUec14QCz3mvCAWesx5QSz0mPOCWOgx5wWx0GPOC2Khx5wXxEKPOS+IhR5zXhALPea8IBZ6zHnB/wN7Wy25Up0oqwAAAABJRU5ErkJggg==" alt="Heatbiosis">
+  <ul class="nav-links">
+    <li><a onclick="showSection('home')" class="active" id="nav-home">Accueil</a></li>
+    <li><a onclick="showSection('about')" id="nav-about">Notre Mission</a></li>
+    <li><a onclick="showSection('solution')" id="nav-solution">Solution</a></li>
+    <li><a onclick="showSection('impact')" id="nav-impact">Impact</a></li>
+    <li><a onclick="showSection('team')" id="nav-team">Équipe</a></li>
+    <li><a onclick="showSection('contact')" id="nav-contact">Contact</a></li>
+  </ul>
+</nav>
+
+<section id="home" class="active" style="max-width:100%;padding:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;text-align:center;">
+  <canvas id="heatCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-tag">Innovation éco-responsable · Data Centers · Microalgues</div>
+    <h1>La <span class="heat-word">chaleur</span><br>devient <span class="algae-word">vie</span></h1>
+    <p class="hero-desc">Heatbiosis transforme les rejets thermiques des micro data centers en ressource pour la culture de microalgues — réduisant les coûts énergétiques tout en créant une filière durable.</p>
+    <button class="hero-cta" onclick="showSection('solution')">Découvrir notre solution <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+  <div class="scroll-hint"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M4 11l5 5 5-5" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Défiler</div>
+</section>
+
+<section id="about">
+  <div class="section-label">Notre Mission</div>
+  <h2>Valoriser ce qui est<br>aujourd'hui gaspillé</h2>
+  <div class="divider"></div>
+  <p class="body-text">Les data centers dissipent d'énormes quantités de chaleur dans l'atmosphère — une énergie perdue, qui contribue au réchauffement urbain. Heatbiosis part d'une question simple : et si cette chaleur pouvait devenir un moteur de production ?</p>
+  <p class="body-text">Notre démarche combine expertise thermique, biologie des microorganismes et ingénierie des systèmes pour concevoir une solution clé-en-main, adaptable aux micro data centers et intégrable dans les infrastructures existantes.</p>
+  <p class="body-text">Nous croisons les faisabilités techniques, économiques, sociétales et environnementales pour garantir qu'Heatbiosis n'est pas qu'une idée — mais un projet déployable et rentable.</p>
+  <div class="cards">
+    <div class="card"><div class="card-icon">🌡️</div><h3>Expertise thermique</h3><p>Comprendre et capter les flux de chaleur issus des équipements de calcul, de la source jusqu'au transfert utile.</p></div>
+    <div class="card"><div class="card-icon">🌿</div><h3>Biologie appliquée</h3><p>Sélectionner les souches de microalgues les plus adaptées aux températures de sortie des serveurs.</p></div>
+    <div class="card"><div class="card-icon">⚙️</div><h3>Ingénierie système</h3><p>Concevoir un prototype fonctionnel, validé en 3D, intégrable dans les contraintes industrielles réelles.</p></div>
+  </div>
+</section>
+
+<section id="solution">
+  <div class="section-label">Notre Solution</div>
+  <h2>Du serveur à la cuve,<br>en circuit fermé</h2>
+  <div class="divider"></div>
+  <p class="body-text">Heatbiosis connecte deux mondes qui s'ignoraient : l'industrie du calcul numérique et la bioéconomie des microalgues. Le principe ? Rediriger la chaleur dissipée par les micro data centers pour maintenir en température les milieux de culture de microorganismes à haute valeur ajoutée.</p>
+  <div class="flow">
+    <div class="flow-item"><div class="flow-num">01</div><div class="flow-body"><h3>Captage thermique</h3><p>Les micro data centers génèrent en permanence de la chaleur résiduelle. Nous intégrons un système d'échangeur thermique directement sur les modules de refroidissement des serveurs pour récupérer cette énergie sans perturber le fonctionnement des équipements.</p></div></div>
+    <div class="flow-item"><div class="flow-num">02</div><div class="flow-body"><h3>Transfert vers les bioréacteurs</h3><p>La chaleur captée est acheminée via un circuit fluide vers des bioréacteurs contenant des microalgues. La température du milieu de culture est ainsi maintenue dans la plage optimale pour chaque souche sélectionnée (20–35 °C selon l'espèce).</p></div></div>
+    <div class="flow-item"><div class="flow-num">03</div><div class="flow-body"><h3>Culture de microalgues</h3><p>Les microalgues se développent plus rapidement dans un milieu thermiquement stabilisé. Elles produisent des biomolécules à forte valeur : compléments alimentaires, antioxydants, précurseurs de biocarburants (biodiesel, bioéthanol).</p></div></div>
+    <div class="flow-item"><div class="flow-num">04</div><div class="flow-body"><h3>Valorisation industrielle</h3><p>La biomasse produite est destinée aux industries pharmaceutiques, agroalimentaires et énergétiques. L'opérateur du data center réduit sa facture de refroidissement ; le producteur d'algues réduit ses coûts de chauffage. Un modèle gagnant-gagnant.</p></div></div>
+  </div>
+</section>
+
+<section id="impact">
+  <div class="section-label">Impact</div>
+  <h2>Des bénéfices mesurables,<br>à chaque niveau</h2>
+  <div class="divider"></div>
+  <p class="body-text">Heatbiosis n'est pas une innovation cosmétique. Chaque composant du système produit un effet concret — économique, environnemental ou industriel — quantifiable et traçable.</p>
+  <div class="stats">
+    <div class="stat-box"><span class="stat-num">~40%</span><div class="stat-label">de la chaleur d'un data center récupérable via échangeur</div></div>
+    <div class="stat-box"><span class="stat-num">↓ CO₂</span><div class="stat-label">réduction des émissions liées au refroidissement actif</div></div>
+    <div class="stat-box"><span class="stat-num">3×</span><div class="stat-label">croissance algale accélérée en milieu thermiquement contrôlé</div></div>
+    <div class="stat-box"><span class="stat-num">2→1</span><div class="stat-label">deux infrastructures, un seul flux énergétique partagé</div></div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-icon">💶</div><h3>Impact économique</h3><p>Réduction des coûts de refroidissement pour l'opérateur data center et des coûts de chauffage pour le producteur d'algues. Un double retour sur investissement.</p></div>
+    <div class="card"><div class="card-icon">🌍</div><h3>Impact environnemental</h3><p>Moins d'énergie consommée pour refroidir, moins de chaleur rejetée en atmosphère, plus de biomasse produite par unité d'énergie. Un cercle vertueux.</p></div>
+    <div class="card"><div class="card-icon">🏭</div><h3>Impact industriel</h3><p>Nouvelle filière de valorisation pour les opérateurs de micro data centers, et approvisionnement en biomasse à coût réduit pour les industries des algues.</p></div>
+  </div>
+</section>
+
+<section id="team">
+  <div class="section-label">Équipe</div>
+  <h2>Des profils complémentaires<br>autour d'un projet commun</h2>
+  <div class="divider"></div>
+  <p class="body-text">Heatbiosis est portée par une équipe pluridisciplinaire qui combine ingénierie thermique, biologie, gestion de projet et analyse économique — une diversité de compétences indispensable pour aborder la complexité de notre défi.</p>
+  <div class="team-grid">
+    <div class="team-card"><div class="team-avatar">M1</div><h3>Membre 1</h3><div class="role">Ingénierie thermique</div></div>
+    <div class="team-card"><div class="team-avatar">M2</div><h3>Membre 2</h3><div class="role">Biologie &amp; microalgues</div></div>
+    <div class="team-card"><div class="team-avatar">M3</div><h3>Membre 3</h3><div class="role">Conception système</div></div>
+    <div class="team-card"><div class="team-avatar">M4</div><h3>Membre 4</h3><div class="role">Analyse économique</div></div>
+    <div class="team-card"><div class="team-avatar">M5</div><h3>Membre 5</h3><div class="role">Faisabilité sociétale</div></div>
+    <div class="team-card"><div class="team-avatar">M6</div><h3>Membre 6</h3><div class="role">Modélisation 3D</div></div>
+  </div>
+  <p class="body-text" style="margin-top:2rem;"><em style="color:var(--slate-dark);">→ Remplacez les noms et rôles ci-dessus par les membres réels de votre équipe.</em></p>
+</section>
+
+<section id="contact">
+  <div class="section-label">Contact</div>
+  <h2>Parlons de votre<br>projet ensemble</h2>
+  <div class="divider"></div>
+  <p class="body-text">Vous êtes opérateur de data center, producteur de microalgues, investisseur ou simplement curieux ? Contactez-nous pour explorer les synergies possibles.</p>
+  <div class="contact-wrap">
+    <div class="form-group"><label>Nom</label><input type="text" placeholder="Votre nom"></div>
+    <div class="form-group"><label>Email</label><input type="email" placeholder="votre@email.com"></div>
+    <div class="form-group"><label>Organisation</label><input type="text" placeholder="Entreprise ou établissement"></div>
+    <div class="form-group"><label>Message</label><textarea placeholder="Décrivez votre projet ou votre question…"></textarea></div>
+    <button class="btn-submit">Envoyer le message</button>
+  </div>
+</section>
+
+<div id="edit-toolbar">
+  <span class="tb-label">✏️ Édition</span>
+  <button id="btn-toggle-edit" onclick="toggleEditMode()">Modifier le texte</button>
+  <button onclick="applyFormat('bold')"><b>B</b></button>
+  <button onclick="applyFormat('italic')"><i>I</i></button>
+  <button onclick="saveEdits()">💾 Télécharger</button>
+</div>
+<div id="edit-toast"></div>
+
+<footer>© 2025 <span>Heatbiosis</span> · Valorisation des rejets thermiques de micro data centers · Tous droits réservés</footer>
+
+<script>
+const canvas = document.getElementById('heatCanvas');
+const ctx = canvas.getContext('2d');
+let waves = [], animId;
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+function initWaves() {
+  waves = [];
+  for (let i = 0; i < 12; i++) waves.push({ y: (canvas.height/12)*i+Math.random()*40, amplitude: 18+Math.random()*28, frequency: 0.004+Math.random()*0.006, speed: 0.003+Math.random()*0.004, offset: Math.random()*Math.PI*2, hue: i%2===0?'#2DD4A0':'#FF6B35', opacity: 0.12+Math.random()*0.18 });
+}
+function drawWaves(t) {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  waves.forEach(w => { ctx.beginPath(); ctx.moveTo(0,w.y); for(let x=0;x<=canvas.width;x+=4){ const y=w.y+Math.sin(x*w.frequency+t*w.speed+w.offset)*w.amplitude+Math.sin(x*w.frequency*2.3+t*w.speed*0.7)*w.amplitude*0.4; ctx.lineTo(x,y); } ctx.strokeStyle=w.hue; ctx.globalAlpha=w.opacity; ctx.lineWidth=1.5; ctx.stroke(); ctx.globalAlpha=1; });
+}
+let t=0;
+function animate(){ t++; drawWaves(t); animId=requestAnimationFrame(animate); }
+resizeCanvas(); initWaves(); animate();
+window.addEventListener('resize',()=>{ resizeCanvas(); initWaves(); });
+
+const sections=['home','about','solution','impact','team','contact'];
+function showSection(id){
+  sections.forEach(s=>{ const el=document.getElementById(s),nav=document.getElementById('nav-'+s); if(el)el.classList.remove('active'); if(nav)nav.classList.remove('active'); });
+  const target=document.getElementById(id),navTarget=document.getElementById('nav-'+id);
+  if(target)target.classList.add('active'); if(navTarget)navTarget.classList.add('active');
+  if(id==='home'){ canvas.style.display='block'; if(!animId)animate(); } else { canvas.style.display='none'; if(animId){cancelAnimationFrame(animId);animId=null;} }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('home').style.display='flex';
+
+const EDITABLE=['h1 .heat-word','h1 .algae-word','.hero-tag','.hero-desc','h2','h3','p.body-text','.card p','.flow-body p','.stat-num','.stat-label','.section-label','.team-card h3','.team-card .role','.team-avatar'];
+let editMode=false;
+function toggleEditMode(){
+  editMode=!editMode;
+  const btn=document.getElementById('btn-toggle-edit');
+  if(editMode){ document.body.classList.add('edit-mode'); btn.textContent="🔒 Quitter l'édition"; btn.classList.add('editing'); EDITABLE.forEach(sel=>document.querySelectorAll(sel).forEach(el=>{el.contentEditable='true';el.spellcheck=false;})); showToast("Cliquez sur n'importe quel texte pour le modifier"); }
+  else { document.body.classList.remove('edit-mode'); btn.textContent='Modifier le texte'; btn.classList.remove('editing'); document.querySelectorAll('[contenteditable="true"]').forEach(el=>el.contentEditable='false'); showToast('Édition désactivée'); }
+}
+function applyFormat(cmd){ if(!editMode){showToast("Activez d'abord le mode édition");return;} document.execCommand(cmd,false,null); }
+function showToast(msg){ const t=document.getElementById('edit-toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function saveEdits(){
+  const wasEditing=editMode; if(wasEditing)toggleEditMode();
+  const tb=document.getElementById('edit-toolbar'),toast=document.getElementById('edit-toast');
+  tb.style.display='none'; toast.style.display='none';
+  const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  tb.style.display=''; toast.style.display='';
+  if(wasEditing)toggleEditMode();
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='heatbiosis.html'; a.click(); URL.revokeObjectURL(a.href);
+  showToast('✓ Fichier téléchargé !');
+}
+</script>
+</body>
+</html>
